@@ -1,0 +1,1 @@
+<h1>NO hay vista disponible</h1>
