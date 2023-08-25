@@ -37,7 +37,7 @@ $(document).ready(function() {
                     email: true
                 },
                 password: {
-                    min:8
+                    minlength:8
                 },
                 repetir_password: {
                     equalTo: "#password",
@@ -55,7 +55,7 @@ $(document).ready(function() {
 				}
             },
         });
-        
+
     });
     $("#btn_pass").click(function(){
 		mostrar_pass({
@@ -69,7 +69,7 @@ $(document).ready(function() {
             btn:$(this),
         });
 	});
-    
+
 });
 function mostrar_pass(data){
     if(data.input_pass.attr("type")=="password"){
@@ -105,11 +105,11 @@ function ver_usuario(id){
         data:datos,
         idContent:'#modalResultado',
         idModal:'#myModal',
-        size:'modal-lg',//modal-lg modal-sm modal-md 
+        size:'modal-lg',//modal-lg modal-sm modal-md
         backdrop:true,
         ini_modal:function(){
             console.log("sadsadsad");
             $("#input_prueba").focus();
         },
-    });	
+    });
 }

@@ -60,7 +60,7 @@ $titulo="Perfil";
                             </div>
                             <div class="col-md-12"></div>
                             <div class="col-md-4 mb-3 ">
-                               <label for="password">Contraseña de Acceso*</label>
+                               <label for="password">Contraseña*</label>
                                <div class="input-group">
                                  <input type="password" class="form-control" id="password" name="password" placeholder="Escriba Contraseña" autocomplete="new-password" >
                                  <div class="input-group-append">
@@ -69,9 +69,9 @@ $titulo="Perfil";
                                </div>
                             </div>
                             <div class="col-md-4 mb-3">
-                              <label for="repetir_password">Repetir Contraseña de Acceso*</label>
+                              <label for="repetir_password">Repetir Contraseña*</label>
                               <div class="input-group">
-                                 <input type="password" autocomplete="new-password"  class="form-control" id="repetir_password" name="repetir_password" placeholder="Escriba repita Contraseña" >
+                                 <input type="password" autocomplete="new-password"  class="form-control" id="repetir_password" name="repetir_password" placeholder="Repita Contraseña" >
                                  <div class="input-group-append">
                                     <span class="input-group-text fa fa-eye" id="btn_pass2"></span>
                                  </div>
@@ -114,8 +114,8 @@ $titulo="Perfil";
 <script>
 var urls ={
     guardar: '',
-    getImage:'{{route("sucursal/getImageDropzone")}}',
-    removeImage:'{{route("sucursal/deleteImageDropzone")}}',
+    getImage:'{{route("usuario/getImageDropzone")}}',
+    removeImage:'{{route("usuario/deleteImageDropzone")}}',
 };
 Dropzone.autoDiscover = false;
 $(function () {
