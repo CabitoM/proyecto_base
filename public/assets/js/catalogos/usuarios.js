@@ -37,7 +37,7 @@ $(document).ready(function() {
                     email: true
                 },
                 password: {
-                    min:8
+                    minlength:8
                 },
                 repetir_password: {
                     equalTo: "#password",
