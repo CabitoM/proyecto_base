@@ -5,6 +5,8 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogoutController;
+use App\Http\Controllers\Usuario\UsuarioController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -15,7 +17,13 @@ use App\Http\Controllers\LogoutController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+const LISTADO = "listado";// ruta-vista con el listado del modulo
+const NUEVO = "new";// ruta-vista con frm para nuevo registro, en ingles por el nuevo/nueva
+const GUARDAR="guardar";//ruta que ejeuta funcion que guarda frm de /new
+const ACTUALIZAR="actualizar";//ruta que ejecuta funcion que guarda frm de ver
+const INACTIVO="eliminar";//ruta que ejecuta funcion que inactiva registro
+const GET_IMAGEN="image/dropzone/get";// para traer el file al dropzone
+const ELIMINAR_IMAGEN="image/dropzone/delete";
 Route::get('/', function () {
     //return view('welcome');
     return redirect("/login");
@@ -33,57 +41,62 @@ Route::group(['middleware' => ['auth']],function(){
     Route::post('/elegir_sucursal', [LoginController::class,"seleccionar_sucursal"])->name("elegir_sucursal");
     Route::get('/logout', [LogoutController::class,"logout"])->name("logout");
 });
+
 Route::group(['middleware' => ['auth','sucursal']], function() {
 
     Route::get('/home', [HomeController::class,"index"])->name("home.index");
-    Route::prefix('usuario')->as("usuario/")->namespace('App\Http\Controllers\Usuario')->group(function () {
-        Route::get('/listado', 'UsuarioController@listado')->name('index');
-        Route::get('/nuevo', 'UsuarioController@nuevo')->name('create');///crear nuevo (vista)
-        Route::post('/guardar', 'UsuarioController@guardar')->name('guardar');///guardar el nuevo
-        Route::get("/ver/{id?}","UsuarioController@ver")->name("ver");///ver el registro
-        Route::post("/editar","UsuarioController@editar")->name("editar");///editar el registro mostrado
-        Route::post("/eliminar","UsuarioController@eliminar")->name("eliminar");///editar a inactivo el registro seleccionado (del listado)
-        Route::post("/modal_ver","UsuarioController@modal_ver")->name("modal_ver");//modal ver
+    Route::prefix('usuario')->as("usuario/")->group(function () {
+        ///Route::get('/elegir_sucursal', [LoginController::class,"elegir_sucursal"]);
+        Route::get(LISTADO, [UsuarioController::class,"listado"])->name('index');
+        Route::get(NUEVO, [UsuarioController::class, "nuevo"])->name('create');
+        Route::post(GUARDAR, [UsuarioController::class,"guardar"])->name('guardar');
+        Route::get("/ver/{id?}",[UsuarioController::class,"ver"])->name("ver");
+        Route::post(ACTUALIZAR,[UsuarioController::class , "editar"])->name("editar");
+        ///editar a inactivo el registro seleccionado (del listado)
+        Route::post(INACTIVO, [UsuarioController::class, "eliminar"])->name("eliminar");
+        Route::post("/modal_ver",[UsuarioController::class, "modal_ver"])->name("modal_ver");//modal ver
         ////////////////////////// Todo lo relacionado con el Perfil /////////////////////////////
-        Route::get("/perfil","UsuarioController@perfil")->name("perfil");/// ver la informacion de el perfil que esta logueado
+        Route::get("/perfil",[UsuarioController::class,"perfil"])->name("perfil");
+        Route::post(GET_IMAGEN, [UsuarioController::class,"getImageDropzone"])->name('getImageDropzone');
+        Route::post(ELIMINAR_IMAGEN, [UsuarioController::class,"deleteImageDropzone"])->name('deleteImageDropzone');
     });
     Route::prefix('sucursal')->as("sucursal/")->namespace('App\Http\Controllers\Configuraciones')->group(function () {
-        Route::get('/listado', 'SucursalController@listado')->name('index');
-        Route::get('/nueva', 'SucursalController@nueva')->name('nueva');///crear nuevo (vista)
-        Route::post('/guardar', 'SucursalController@guardar')->name('guardar');///guardar el nuevo
-        Route::get("/ver/{id?}","SucursalController@ver")->name("ver");///ver el registro
-        Route::post("/editar","SucursalController@editar")->name("editar");///editar el registro mostrado
-        Route::post("/eliminar","SucursalController@eliminar")->name("eliminar");///editar a inactivo el registro seleccionado (del listado)
+        Route::get(LISTADO, 'SucursalController@listado')->name('index');
+        Route::get(NUEVO, 'SucursalController@nueva')->name('nueva');
+        Route::post(GUARDAR, 'SucursalController@guardar')->name('guardar');
+        Route::get("/ver/{id?}","SucursalController@ver")->name("ver");
+        Route::post(ACTUALIZAR,"SucursalController@editar")->name("editar");
+        Route::post(INACTIVO,"SucursalController@eliminar")->name("eliminar");
         ///PARA EL DROPZONE/////
-        Route::post('/image/dropzone/get', 'SucursalController@getImageDropzone')->name('getImageDropzone');
-        Route::post('/image/dropzone/delete', 'SucursalController@deleteImageDropzone')->name('deleteImageDropzone');
+        Route::post(GET_IMAGEN, 'SucursalController@getImageDropzone')->name('getImageDropzone');
+        Route::post(ELIMINAR_IMAGEN, 'SucursalController@deleteImageDropzone')->name('deleteImageDropzone');
         ///PARA EL DROPZONE/////
     });
     Route::prefix('menu')->as("menu/")->namespace('App\Http\Controllers\Configuraciones')->group(function () {
-        Route::get("/listado", 'MenuController@listado')->name('listado');
-        Route::get("/nuevo", 'MenuController@nuevo')->name('nuevo');
-        Route::post("/guardar", 'MenuController@guardar')->name('guardar');
+        Route::get(LISTADO, 'MenuController@listado')->name('listado');
+        Route::get(NUEVO, 'MenuController@nuevo')->name('nuevo');
+        Route::post(GUARDAR, 'MenuController@guardar')->name('guardar');
         Route::get("/ver/{id?}","MenuController@ver")->name("ver");
-        Route::post("/editar","MenuController@editar")->name("editar");
-        Route::post("/eliminar","MenuController@eliminar")->name("eliminar");
+        Route::post(ACTUALIZAR,"MenuController@editar")->name("editar");
+        Route::post(INACTIVO,"MenuController@eliminar")->name("eliminar");
     });
     Route::prefix('rol')->as("rol/")->namespace('App\Http\Controllers\Configuraciones')->group(function () {
-        Route::get("/listado", 'RolController@listado')->name('listado');
-        Route::get("/nuevo", 'RolController@nuevo')->name('nuevo');
-        Route::post("/guardar", 'RolController@guardar')->name('guardar');
+        Route::get(LISTADO, 'RolController@listado')->name('listado');
+        Route::get(NUEVO, 'RolController@nuevo')->name('nuevo');
+        Route::post(GUARDAR, 'RolController@guardar')->name('guardar');
         Route::get("/ver/{id?}","RolController@ver")->name("ver");
-        Route::post("/editar","RolController@editar")->name("editar");
-        Route::post("/eliminar","RolController@eliminar")->name("eliminar");
+        Route::post(ACTUALIZAR,"RolController@editar")->name("editar");
+        Route::post(INACTIVO,"RolController@eliminar")->name("eliminar");
 
         Route::get("/permisos/","RolController@permisos")->name("permisos");
     });
     Route::prefix('permiso')->as("permiso/")->namespace('App\Http\Controllers\Configuraciones')->group(function () {
-        Route::get("/listado", 'PermisoController@listado')->name('listado');
-        Route::get("/nuevo", 'PermisoController@nuevo')->name('nuevo');
-        Route::post("/guardar", 'PermisoController@guardar')->name('guardar');
+        Route::get(LISTADO, 'PermisoController@listado')->name('listado');
+        Route::get(NUEVO, 'PermisoController@nuevo')->name('nuevo');
+        Route::post(GUARDAR, 'PermisoController@guardar')->name('guardar');
         Route::get("/ver/{id?}","PermisoController@ver")->name("ver");
-        Route::post("/editar","PermisoController@editar")->name("editar");
-        Route::post("/eliminar","PermisoController@eliminar")->name("eliminar");
+        Route::post(ACTUALIZAR,"PermisoController@editar")->name("editar");
+        Route::post(INACTIVO,"PermisoController@eliminar")->name("eliminar");
     });
 
 });

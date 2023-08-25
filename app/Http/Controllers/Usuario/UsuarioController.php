@@ -18,21 +18,21 @@ class UsuarioController extends Controller
 {
     //
     public function getRoles(){
-        return Rol::where('status','Activo')       
+        return Rol::where('status','Activo')
         ->orderby('nombre')
-        //->where("super_user",0)      
+        //->where("super_user",0)
         ->get();
-       
+
     }
     public function datos_usuario($id){
         $plazas=CatPlaza::select("cat_plaza.*")
-        ->where('cat_plaza.status','Activo')            
-        ->orderby('cat_plaza.name')      
+        ->where('cat_plaza.status','Activo')
+        ->orderby('cat_plaza.name')
         ->with("sucursales")
-        ->get(); 
+        ->get();
         $usuario = User::findOrFail($id);
-        $usuario_rol = RolUsuario::where("status","Activo")     
-        ->where("id_usuario",$id)     
+        $usuario_rol = RolUsuario::where("status","Activo")
+        ->where("id_usuario",$id)
         ->get();
         $arrayRoleUser["perfil"]=[];
         $arrayRoleUser["chk"]=[];
@@ -60,7 +60,7 @@ class UsuarioController extends Controller
             ->join("users as u","users.id_usuario","=","u.id")
             ->where("users.status","Activo")->where("users.super_user","N")->get();
         }
-        
+
         return view("Configuraciones.usuario.index",['data' => $usuario,]);
     }
     public function ver($id){
@@ -69,10 +69,10 @@ class UsuarioController extends Controller
     public function nuevo(){
         $plazas=CatPlaza::select("cat_plaza.*")
         //->join("cat_sucursal as s","cat_plaza.id","=","s.plaza_id")
-        ->where('cat_plaza.status','Activo')            
-        ->orderby('cat_plaza.name')      
+        ->where('cat_plaza.status','Activo')
+        ->orderby('cat_plaza.name')
         ->with("sucursales")
-        ->get(); 
+        ->get();
         return view("Configuraciones.usuario.nuevo",[
             "modulo"=>"A",
             "plazas"=>$plazas,
@@ -80,10 +80,10 @@ class UsuarioController extends Controller
         ]);
     }
     public function guardar(UsuarioRequest $request){
-        try { 
-            DB::transaction(function () use($request) { 
+        try {
+            DB::transaction(function () use($request) {
                 $user=Auth::user();
-                $usuario=new User(); 
+                $usuario=new User();
                 $usuario->name=$request->nombre;
                 $usuario->status="Activo";
                 $usuario->id_usuario=$user->id;
@@ -91,50 +91,51 @@ class UsuarioController extends Controller
                 $usuario->email=$request->correo;
                 $usuario->telefono=$request->telefono;
                 $usuario->direccion=$request->direccion;
-                $usuario->password=Hash::make($request->password);
+                $usuario->password=$request->password;
                 $usuario->save();
             });
             return response()->json([
                 "respuesta"=>1,
-                "mensaje"=>"Se Guardó el Usuario",           
+                "mensaje"=>"Se Guardó el Usuario",
             ]);
-        } catch (\Exception $e) {      
+        } catch (\Exception $e) {
             abort(400,$e->getMessage());
         }
     }
     public function editar(UsuarioRequest $request){
-        
-        try { 
+
+        try {
             $antes=[];
             $despues=[];
-            DB::transaction(function () use($request,&$antes,&$despues) {  
+            DB::transaction(function () use($request,&$antes,&$despues) {
                 $id_usuario=Auth::user()->id;
                 $id_reg=$request->id_user;
+                $antes=User::findOrFail($id_reg)->toJson();
                 /// se instancia la clase y se buscan los datos con ese id
-                $usuario=User::findOrFail($id_reg);
-                $antes=$usuario->toJson();
-                
-                $usuario->name=$request->nombre;
-                $usuario->id_usuario=$id_usuario;
-                $usuario->username=$request->username;
-                $usuario->email=$request->correo;
-                $usuario->telefono=$request->telefono;
-                $usuario->direccion=$request->direccion;
+                $usuario=[
+                    "status"=>"Inactivo",
+                    "name"=>$request->nombre,
+                    "id_usuario"=>$id_usuario,
+                    "username"=>$request->username,
+                    "email"=>$request->correo,
+                    "telefono"=>$request->telefono,
+                    "direccion"=>$request->direccion
+                ];
                 if(!empty($request->input("password"))){
-                    $usuario->password=Hash::make($request->password);
+                    $usuario["password"]=$request->password;
                 }
-                $usuario->save();
+                User::where([
+                    ['id',$id_usuario],
+                ])->update($usuario);
                 $despues=User::findOrFail($id_reg)->toJson();
 
-                $sucurlsales_rol=json_decode($request->input('jsonAcceso'));//llos accesos y sucursales que se le dieron
+                $RolSucursales=json_decode($request->input('jsonAcceso'));//los accesos y sucursales que se le dieron
                 RolUsuario::where([
-                    ['id_usuario',$usuario->id],
+                    ['id_usuario',$id_reg],
                 ])->update(['status'=>'Inactivo']);
-                //dd($sucurlsales_rol);
-                foreach ( $sucurlsales_rol as $sucursal) {
-                    //dd($sucursal);
+                foreach ( $RolSucursales as $sucursal) {
                     $update_rol=RolUsuario::where([
-                        ["id_usuario",$usuario->id],
+                        ["id_usuario",$id_reg],
                         ["id_sucursal",$sucursal->id_sucursal],
                         ["acceso",$sucursal->acceso],
                     ])->update([
@@ -146,7 +147,7 @@ class UsuarioController extends Controller
                         $nuevo_rol= new RolUsuario();
                         $nuevo_rol->status="Activo";
                         $nuevo_rol->id_rol=$sucursal->id_rol;
-                        $nuevo_rol->id_usuario=$usuario->id;
+                        $nuevo_rol->id_usuario=$id_reg;
                         $nuevo_rol->id_sucursal=$sucursal->id_sucursal;
                         $nuevo_rol->acceso=$sucursal->acceso;
                         $nuevo_rol->save();
@@ -160,20 +161,20 @@ class UsuarioController extends Controller
                     "antes"=>$antes,
                     "despues"=>$despues,
                     "comentario"=>"Actualización de Usuario",
-                ]))->create(); 
+                ]))->create();
                 */
             });
             return response()->json([
                 "respuesta"=>1,
-                "mensaje"=>"Se guardaron los datos",           
+                "mensaje"=>"Se guardaron los datos",
             ]);
-        } catch (\Exception $e) {      
+        } catch (\Exception $e) {
             abort(400,$e->getMessage());
         }
     }
     public function eliminar(Request $request){
-        try { 
-            DB::transaction(function () use($request) { 
+        try {
+            DB::transaction(function () use($request) {
                 $id_reg=$request->id_reg;
                 $usuario=User::findOrFail($id_reg);
                 $usuario->status="Inactivo";
@@ -185,16 +186,16 @@ class UsuarioController extends Controller
                     "antes"=>"",
                     "despues"=>"",
                     "comentario"=>"Se eliminó usuario",
-                ]))->create(); 
+                ]))->create();
             });
             return response()->json([
                 "respuesta"=>1,
-                "mensaje"=>"Se Eliminó el Usuario",           
+                "mensaje"=>"Se Eliminó el Usuario",
             ]);
-        } catch (\Exception $e) {      
+        } catch (\Exception $e) {
             abort(400,$e->getMessage());
         }
-    }  
+    }
     public function modal_ver(Request $request){
         return view("Configuraciones.usuario.modal_ver",$this->datos_usuario($request->id));
     }
@@ -202,5 +203,12 @@ class UsuarioController extends Controller
         return view("Configuraciones.usuario.perfil",[
             "usuario"=> Auth::user()
         ]);
+    }
+    public function getImageDropzone(Request $request){
+        $fileList=array();
+        return response()->json($fileList);
+    }
+    public function deleteImageDropzone(Request $request){
+        return response()->json(['respuesta'=>1]);
     }
 }
